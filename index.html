@@ -6,36 +6,35 @@
   <title>Calculadora</title>
   <style>
     body {
-      background-color: #f0f4f8;
       font-family: Arial, sans-serif;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
       margin: 0;
+      background: #f0f0f0;
     }
 
     .calculator {
-      background-color: #fff;
+      background: white;
       padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      width: 320px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      width: 300px;
     }
 
     .display {
-        width: 90%;
-        height: 50px;
-        font-size: 24px;
-        padding: 10px;
-        margin: 0 auto 20px auto;
-        text-align: right;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-        display: block;
+      width: 90%;
+      height: 50px;
+      font-size: 24px;
+      padding: 10px;
+      margin: 0 auto 20px auto;
+      text-align: right;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      display: block;
     }
-
 
     .buttons {
       display: grid;
@@ -44,37 +43,22 @@
     }
 
     .buttons button {
-      font-size: 18px;
       padding: 15px;
+      font-size: 18px;
+      border-radius: 6px;
       border: none;
-      border-radius: 8px;
+      background-color: #e0e0e0;
       cursor: pointer;
-      background-color: #007bff;
-      color: #fff;
-      transition: background-color 0.2s;
     }
 
     .buttons button:hover {
-      background-color: #0056b3;
-    }
-
-    .buttons button:active {
-      transform: scale(0.98);
-    }
-
-    .buttons button:nth-child(17) {
-      grid-column: span 2;
-      background-color: #dc3545;
-    }
-
-    .buttons button:nth-child(17):hover {
-      background-color: #c82333;
+      background-color: #ccc;
     }
   </style>
 </head>
 <body>
   <div class="calculator">
-    <input type="text" class="display" disabled>
+    <input type="text" class="display" disabled />
     <div class="buttons">
       <button>+</button>
       <button>7</button>
@@ -97,71 +81,49 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const display = document.querySelector('.display');
-      const buttons = document.querySelectorAll('.buttons button');
+    const display = document.querySelector('.display');
+    const buttons = document.querySelectorAll('.buttons button');
 
-      buttons.forEach(button => {
-        button.addEventListener('click', () => {
-          const value = button.textContent;
-          if (value === 'AC') {
-            display.value = '';
-          } else if (value === '=') {
-            calcular(display.value);
-          } else {
-            display.value += value;
+    buttons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const value = button.textContent;
+
+        if (value === 'AC') {
+          display.value = '';
+          return;
+        }
+
+        if (value === '=') {
+          try {
+            const expression = display.value;
+            const operator = expression.match(/[+\-*/]/)[0];
+            const [a, b] = expression.split(operator);
+
+            const endpoints = {
+              '+': 'https://calculadora-soma.vercel.app/api/add',
+              '-': 'https://calculadora-subtracao.vercel.app/api/subtract',
+              '*': 'https://calculadora-multiplicacao.vercel.app/api/multiply',
+              '/': 'https://calculadora-divisao.vercel.app/api/divide',
+            };
+
+            const url = `${endpoints[operator]}?a=${a}&b=${b}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.result !== undefined) {
+              display.value = data.result;
+            } else {
+              display.value = 'Erro';
+            }
+          } catch (err) {
+            display.value = 'Erro';
           }
-        });
+
+          return;
+        }
+
+        display.value += value;
       });
-
-      async function calcular(expressao) {
-        const operadores = ['+', '-', '*', '/'];
-        let operador;
-
-        for (const op of operadores) {
-          if (expressao.includes(op)) {
-            operador = op;
-            break;
-          }
-        }
-
-        if (!operador) {
-          display.value = 'Erro';
-          return;
-        }
-
-        const [a, b] = expressao.split(operador).map(Number);
-
-        if (isNaN(a) || isNaN(b)) {
-          display.value = 'Erro';
-          return;
-        }
-
-        let url = '';
-
-        switch (operador) {
-          case '+':
-            url = `https://calculadora-soma.vercel.app/api/add?a=${a}&b=${b}`;
-            break;
-          case '-':
-            url = `https://calculadora-subtracao.vercel.app/api/sub?a=${a}&b=${b}`;
-            break;
-          case '*':
-            url = `https://calculadora-multiplicacao.vercel.app/api/mul?a=${a}&b=${b}`;
-            break;
-          case '/':
-            url = `https://calculadora-divisao.vercel.app/api/div?a=${a}&b=${b}`;
-            break;
-        }
-
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          display.value = data.result ?? 'Erro';
-        } catch (error) {
-          display.value = 'Erro';
-        }
-      }
     });
   </script>
 </body>
